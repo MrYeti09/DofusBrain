@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en">
+<link href="https://fonts.googleapis.com/css?family=Francois+One" rel="stylesheet">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.10.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js"></script>
+<link rel="stylesheet" type="text/css" href="tooltipster-master/dist/css/tooltipster.bundle.min.css" />
+<script type="text/javascript" src="tooltipster-master/dist/js/tooltipster.bundle.min.js"></script>
+<link rel="stylesheet" href="/tipso/tipso.css">
+<script src="/tipso/tipso.js"></script>
+<style>
+    html {
+        scroll-behavior: smooth;
+    }
+
+    #vertical {
+        text-align: center;
+        margin-top: 30px;
+        z-index: 3;
+    }
+
+    .logo:hover {
+        cursor: pointer;
+    }
+
+    .item-icon {
+        width: 96px;
+    }
+
+    .item-container {
+        background-color: aliceblue;
+        border-radius: 24px;
+        margin: 1px;
+        width: 96px;
+        transition: 0.1s all;
+        display: inline-flex;
+        height: 96px;
+    }
+
+    .item-container:hover {
+        cursor: pointer;
+        background-color: rgb(205, 211, 216)
+    }
+
+    .item-container-sel {
+        background-color: aliceblue;
+        border-radius: 24px;
+        margin: 1px;
+        width: 96px;
+        transition: 0.1s all;
+        display: inline-flex;
+        height: 96px;
+    }
+
+    .item-container-sel:hover {
+        cursor: pointer;
+        background-color: rgb(205, 211, 216)
+    }
+
+    /* The Overlay (background) */
+    .overlay {
+        /* Height & width depends on how you want to reveal the overlay (see JS below) */
+        height: 100%;
+        width: 0;
+        position: fixed;
+        /* Stay in place */
+        z-index: 4;
+        /* Sit on top */
+        left: 0;
+        top: 0;
+        background-color: rgb(0, 0, 0);
+        /* Black fallback color */
+        background-color: rgba(0, 0, 0, 0.9);
+        /* Black w/opacity */
+        overflow-x: hidden;
+        /* Disable horizontal scroll */
+        transition: 0.5s;
+        /* 0.5 second transition effect to slide in or slide down the overlay (height or width, depending on reveal) */
+    }
+
+    /* Position the content inside the overlay */
+    .overlay-content {
+        position: relative;
+        top: 5%;
+        /* 25% from the top */
+        width: 95%;
+        /* 100% width */
+        text-align: center;
+        /* Centered text/links */
+        margin-top: 30px;
+        /* 30px top margin to avoid conflict with the close button on smaller screens */
+        margin-right: 15%
+    }
+
+    /* The navigation links inside the overlay */
+    .overlay a {
+        padding: 8px;
+        text-decoration: none;
+        font-size: 36px;
+        color: #818181;
+        display: block;
+        /* Display block instead of inline */
+        transition: 0.3s;
+        /* Transition effects on hover (color) */
+    }
+
+    /* When you mouse over the navigation links, change their color */
+    .overlay a:hover,
+    .overlay a:focus {
+        color: #f1f1f1;
+    }
+
+    /* Position the close button (top right corner) */
+    .overlay .closebtn {
+        position: absolute;
+        top: 5px;
+        right: 45px;
+        font-size: 60px;
+
+    }
+
+    /* When the height of the screen is less than 450 pixels, change the font-size of the links and position the close button again, so they don't overlap */
+    @media screen and (max-height: 450px) {
+        .overlay a {
+            font-size: 20px
+        }
+
+        .overlay .closebtn {
+            font-size: 40px;
+            top: 15px;
+            right: 35px;
+        }
+    }
+
+    .tipso_bubble {
+        background: rgba(0, 0, 0, 0.568);
+        border-radius: 20px;
+        padding: 2px;
+        z-index: 3;
+        width: auto;
+        position: absolute;
+
+    }
+    #uguu {
+    position:fixed;
+    display:none;
+    background-color:rgba(0, 0, 0, 0.568);
+    z-index:10;
+    border:1px solid ecf;
+    pointer-events:none;
+    padding: 8px;
+    border-radius: 20px;
+    text-align: left;
+    color: white;
+    max-width: 190px;
+}
+    .loading {
+        height: 100%;
+        width: 100%;
+        position: fixed;
+        /* Stay in place */
+        z-index: 1;
+        /* Sit on top */
+        left: 0;
+        top: 0;
+        background-color: rgb(0, 0, 0);
+        /* Black fallback color */
+        background-color: rgba(0, 0, 0, 0.932);
+        /* Black w/opacity */
+        overflow-x: hidden;
+        /* Disable horizontal scroll */
+        transition: 0.5s;
+    }
+
+</style>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    var current_equipment = []
+    var url = new URL(document.location);
+    function insertParam(key, value) {
+        key = encodeURI(key); value = encodeURI(value);
+
+        var kvp = document.location.search.substr(1).split('&');
+
+        var i = kvp.length; var x; while (i--) {
+            x = kvp[i].split('=');
+
+            if (x[0] == key) {
+                x[1] = value;
+                kvp[i] = x.join('=');
+                break;
+            }
+        }
+
+        if (i < 0) { kvp[kvp.length] = [key, value].join('='); }
+
+        //this will reload the page, it's likely better to store this until finished
+        //document.location.search = kvp.join('&');
+    }
+    if (url.searchParams.get("set") == null || url.searchParams.get("set") == 0) {
+        insertParam("set", encodeURIComponent(CryptoJS.AES.encrypt("00a00a00a00a00a00a00a00a00a00", "dumbpass")))
+    }
+    var socket = io(document.location.origin);
+
+    var amulets_list = []
+    var equip = []
+    $('.tipso').tipso();
+</script>
+
+<body style="background-color: #282c34">
+    <span id="uguu"></span>
+    <div class="loading">
+        <div style="font-size: 48px;color:white;text-align: center;z-index:4;position:absolute;left:50%;top:50%;">Loading<br><div id="counting">aa</div></div>
+    </div>
+    <div id="myNav" class="overlay">
+
+        <!-- Button to close the overlay navigation -->
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav(-1)">&times;</a>
+
+        <!-- Overlay content -->
+        <div class="overlay-content">
+            <ul id="amulets-list">
+
+            </ul>
+        </div>
+
+    </div>
+    <div id="vertical" class="logo"><img src="imgs/logo.png" width="128px" style="vertical-align: middle;"><span
+            style="color:white;vertical-align: middle;font-size:68px;font-family: 'Francois One', sans-serif;">Dofus
+            Creator</span></div>
+    <div style="position: absolute;top: 50%;left: 50%;margin-top: -250px;">
+        <div
+            style="width:512px;height:512px;background-color: #21232b;border-radius: 32px;transform: translate(-50%, 0%);">
+            <div onclick="openNav(0)" class="item-container"><img class="item-icon" id="0-icon"></div>
+            <div onclick="openNav(1)" class="item-container"><img class="item-icon" id="1-icon"></div>
+            <div onclick="openNav(2)" class="item-container"><img class="item-icon" id="2-icon"></div>
+            <div onclick="openNav(3)" class="item-container"><img class="item-icon" id="3-icon"></div>
+            <div onclick="openNav(4)" class="item-container"><img class="item-icon" id="4-icon"></div>
+            <div onclick="openNav(5)" class="item-container"><img class="item-icon" id="5-icon"></div>
+            <div onclick="openNav(6)" class="item-container"><img class="item-icon" id="6-icon"></div>
+            <div onclick="openNav(7)" class="item-container"><img class="item-icon" id="7-icon"></div>
+            <div onclick="openNav(8)" class="item-container"><img class="item-icon" id="8-icon"></div>
+        </div>
+    </div>
+</body>
+<script>
+    function predicatBy(prop) {
+        return function (a, b) {
+            if (a[prop] > b[prop]) {
+                return 1;
+            } else if (a[prop] < b[prop]) {
+                return -1;
+            }
+            return 0;
+        }
+    }
+
+
+    function find_item_by_item(id) {
+        ////console.log(id)
+        for (var i = 0; i < equip.length; i++) {
+
+            if (equip[i]._id == id) {
+                return equip[i]
+            }
+        }
+        return null
+    }
+
+var loading = true
+    function load_items(i)
+    {
+            ////console.log(i)
+            var cur_id = amulets_list[i]
+            $('#counting').html(i+"/"+amulets_list.length)
+            //////console.log(cur_id)
+            $.getJSON('equipments/' + cur_id + '/info.json', function (data) {
+                equip.push(data)
+                equip.sort(function (a, b) { return a['lvl'] - b['lvl'] });
+                
+
+            })
+            //console.log(i)
+            
+            if(i<amulets_list.length-1)
+            {
+                setTimeout(function() {
+                load_items(i+1)
+                },0.0)
+            }
+            if(i==amulets_list.length-1)
+            {
+                loading = false
+                $(".loading").hide()
+            }
+           
+    }
+
+    var cs = url.searchParams.get("loadout");
+    var c = []
+    socket.on("amulets-qnt", function (data) {
+        amulets_list = data
+        //console.log(data)
+        //////console.log(amulets_list)
+        load_items(0)
+            //if(i == amulets_list.length-1) { ////console.log(equip.reverse()) }
+
+        })
+
+
+
+    
+
+    if (cs != null) {
+        c = cs.split("a")
+
+        var decrypteds = CryptoJS.AES.encrypt(cs, "dumbpass");
+        ////console.log(encodeURIComponent(decrypteds.toString()));
+        var decryptedss = CryptoJS.AES.decrypt(decodeURIComponent(decrypteds.toString()), "dumbpass");
+        ////console.log(decryptedss.toString(CryptoJS.enc.Utf8))
+        if (c[0] != null) { $('#0-icon').attr("src", "equipments/" + c[0] + "/img.png"); }
+            if (c[1] != null) { $('#1-icon').attr("src", "equipments/" + c[1] + "/img.png"); }
+            if (c[2] != null) { $('#2-icon').attr("src", "equipments/" + c[2] + "/img.png"); }
+            if (c[3] != null) { $('#3-icon').attr("src", "equipments/" + c[3] + "/img.png"); }
+            if (c[4] != null) { $('#4-icon').attr("src", "equipments/" + c[4] + "/img.png"); }
+            if (c[5] != null) { $('#5-icon').attr("src", "equipments/" + c[5] + "/img.png"); }
+            if (c[6] != null) { $('#6-icon').attr("src", "equipments/" + c[6] + "/img.png"); }
+            if (c[7] != null) { $('#7-icon').attr("src", "equipments/" + c[7] + "/img.png"); }
+            if (c[8] != null) { $('8-icon').attr("src", "equipments/" + c[8] + "/img.png"); }
+        ////console.log(c);
+    } else {
+        var cse = url.searchParams.get("set");
+        //////console.log(cse)
+        var decrypted = CryptoJS.AES.decrypt(decodeURIComponent(cse), "dumbpass");
+        //////console.log(decrypted)
+        var res = decrypted.toString(CryptoJS.enc.Utf8);
+        c = res.split("a")
+        current_equipment = c
+        ////console.log("current_equipment", current_equipment)
+        if (cse != null) {
+            if (c[0] != null) { $('#0-icon').attr("src", "equipments/" + c[0] + "/img.png"); }
+            if (c[1] != null) { $('#1-icon').attr("src", "equipments/" + c[1] + "/img.png"); }
+            if (c[2] != null) { $('#2-icon').attr("src", "equipments/" + c[2] + "/img.png"); }
+            if (c[3] != null) { $('#3-icon').attr("src", "equipments/" + c[3] + "/img.png"); }
+            if (c[4] != null) { $('#4-icon').attr("src", "equipments/" + c[4] + "/img.png"); }
+            if (c[5] != null) { $('#5-icon').attr("src", "equipments/" + c[5] + "/img.png"); }
+            if (c[6] != null) { $('#6-icon').attr("src", "equipments/" + c[6] + "/img.png"); }
+            if (c[7] != null) { $('#7-icon').attr("src", "equipments/" + c[7] + "/img.png"); }
+            if (c[8] != null) { $('8-icon').attr("src", "equipments/" + c[8] + "/img.png"); }
+        }
+    }
+
+    /* Open when someone clicks on the span element */
+    function add_tooltip(ids) {
+        var data = find_item_by_item(ids)
+        
+        var tg = "#" + ids
+        //////console.log($(tg).html)
+        //$(tg).attr("data-tipso",datares)
+        var attr = ""
+            for (var s = 0; s < data.stats.length; s++) {
+                var obk = Object.keys(data.stats[s])
+                var atrs = data.stats[s][obk[0]]
+                //////console.log(atrs)
+                var cr = "rgb(50,255,50)"
+                if (atrs.to == null) {
+                    if (atrs.from < 0) { cr = "rgb(255,75,75)" }
+                    attr += "<div style=\'color: " + cr + ";font-weight:bold;\'>" + atrs.from + " " + obk + "</div>"
+                } else {
+                    if (atrs.to < 0) { cr = "rgb(255,75,75)" }
+                    attr += "<div style=\'color: " + cr + ";font-weight:bold;\'>" + atrs.to + " " + obk + "</div>"
+                }
+                if(s == data.stats.length-1)
+                {
+                    var datares = '<div style=\'color:white;font-weight: bold;font-size:19px;\'>' + String(data.name).replace(/[^a-zA-Z ]/g, "") + '</div><div style=\'font-size:12px;\'>level ' + data.lvl + '</div>' + attr
+                    $('#' + data._id).attr("data-tipso", datares)
+                    
+                }
+            }
+            //////console.log(attr)
+        
+    }
+
+    
+    function remove_tooltip(ids) {
+
+        var tg = "#" + ids
+        $(tg).attr("data-tipso","ID("+ids+")")
+    }
+var loaded = false
+    function load_inf(i,slot)
+    {
+        if(loaded == false)
+        {
+                var cur_id = amulets_list[i]
+                //////console.log(cur_id)
+                var data = equip[i]
+
+                var dts = ''
+                $("#amulets-list").append('<li onclick="closeNav(' + data._id + ','+slot+')" slot="'+slot+'" onmouseover="add_tooltip('+data._id+')" onmouseleave="remove_tooltip(' + data._id + ')" class="item-container-sel" id="' + data._id + '" data-tipso="ID('+data._id+')"><img class="item-icon" src="equipments/' + data._id + '/img.png"></li>')
+                var attr = ""
+                for (var s = 0; s < data.stats.length; s++) {
+                    var obk = Object.keys(data.stats[s])
+                    var atrs = data.stats[s][obk[0]]
+                    //////console.log(atrs)
+                    var cr = "rgb(50,255,50)"
+                    if (atrs.to == null) {
+                        if (atrs.from < 0) { cr = "rgb(255,75,75)" }
+                        attr += "<div style=\'color: " + cr + ";font-weight:bold;\'>" + atrs.from + " " + obk + "</div>"
+                    } else {
+                        if (atrs.to < 0) { cr = "rgb(255,75,75)" }
+                        attr += "<div style=\'color: " + cr + ";font-weight:bold;\'>" + atrs.to + " " + obk + "</div>"
+                    }
+                }
+                $('#' + data._id).hover(function (e) {
+                                var idx = $(this).index();
+                                $("#uguu")
+                                    .css("top", $(this).offset().top-20)
+                                    .css("left", $(this).offset().left + 40)
+                                    .html($(this).attr('data-tipso'))
+                                    .show();
+                            }, function () {
+                                $("#uguu").hide();
+                            });
+            if(i > 0)
+            {
+                setTimeout(function() {
+                load_inf(i-1,slot)
+                }, 1)
+            }
+            if(i == 0)
+            {
+               console.log("loaded all")
+               loaded = true
+            }
+        } else{
+            var data = equip[i]
+            $("#"+data._id).show()
+            if(i > 0 && $("#myNav").is(":visible"))
+            {
+                setTimeout(function() {
+                load_inf(i-1,slot)
+                }, 1)
+            }
+            if(!$("#myNav").is(":visible"))
+            {
+                $(".item-container-sel").hide()
+            }
+        }
+}
+    function openNav(slot) {
+        //document.getElementById("myNav").style.width = "100%"
+        $('#myNav').animate({
+            width: '100%'
+        })
+        load_inf(equip.length-1,slot)
+
+        
+        
+            //////console.log(attr)
+            //var datares = '<div style=\'color:white;font-weight: bold;\'>' + String(data.name).replace(/[^a-zA-Z ]/g, "") + '</div><div style=\'font-size:12px;\'>level ' + data.lvl + '</div>' + attr
+            //$('#' + data._id).attr("data-tipso", datares)
+            
+        }
+
+
+        //$('.item-container-sel').tipso({
+          //  background: '#00000099'
+       // })
+
+
+        
+
+    /* Close when someone clicks on the "x" symbol inside the overlay */
+    function closeNav(id,slot) {
+        $('#uguu').hide()
+        //loaded = true
+        $(".item-container-sel").hide()
+        document.getElementById("myNav").style.width = "0%";
+        //alert("clicked id"+id)
+        if(id != -1)
+        {
+        current_equipment[slot] = id
+        $('#'+slot+'-icon').attr("src", "equipments/" + current_equipment[slot] + "/img.png");
+        insertParam("set", encodeURIComponent(CryptoJS.AES.encrypt(current_equipment.join("a"), "dumbpass")))
+        }
+    }
+
+</script>
+
+</html>
