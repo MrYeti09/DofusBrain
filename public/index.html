@@ -2,7 +2,6 @@
 <html lang="en">
 <link href="https://fonts.googleapis.com/css?family=Francois+One" rel="stylesheet">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-<script type="text/javascript" src="http://code.jquery.com/jquery-1.10.0.min.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js"></script>
 <link rel="stylesheet" type="text/css" href="tooltipster-master/dist/css/tooltipster.bundle.min.css" />
@@ -398,7 +397,7 @@ var loaded = false
                 var data = equip[i]
 
                 var dts = ''
-                $("#amulets-list").append('<li onclick="closeNav(' + data._id + ','+slot+')" slot="'+slot+'" onmouseover="add_tooltip('+data._id+')" onmouseleave="remove_tooltip(' + data._id + ')" class="item-container-sel" id="' + data._id + '" data-tipso="ID('+data._id+')"><img class="item-icon" src="'+data.imgUrl+'"></li>')
+                $("#amulets-list").append('<li onclick="closeNav(' + data._id + ','+slot+')" slot="'+slot+'" onmouseover="add_tooltip('+data._id+')" onmouseleave="remove_tooltip(' + data._id + ')" class="item-container-sel" id="' + data._id + '" data-tipso="ID('+data._id+')"><img class="item-icon" src="equipments/' + data._id + '/img.png"></li>')
                 var attr = ""
                 for (var s = 0; s < data.stats.length; s++) {
                     var obk = Object.keys(data.stats[s])
