@@ -8,7 +8,7 @@ const fs = require('fs');
 app.use(express.static(__dirname + '/public'));
 
 
-server.listen(4200)
+server.listen(8080)
 var equips = []
 fs.readdir("./public/equipments", (err, files) => {
   //console.log(files.length,files);
