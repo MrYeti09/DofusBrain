@@ -398,7 +398,7 @@ var loaded = false
                 var data = equip[i]
 
                 var dts = ''
-                $("#amulets-list").append('<li onclick="closeNav(' + data._id + ','+slot+')" slot="'+slot+'" onmouseover="add_tooltip('+data._id+')" onmouseleave="remove_tooltip(' + data._id + ')" class="item-container-sel" id="' + data._id + '" data-tipso="ID('+data._id+')"><img class="item-icon" src="equipments/' + data._id + '/img.png"></li>')
+                $("#amulets-list").append('<li onclick="closeNav(' + data._id + ','+slot+')" slot="'+slot+'" onmouseover="add_tooltip('+data._id+')" onmouseleave="remove_tooltip(' + data._id + ')" class="item-container-sel" id="' + data._id + '" data-tipso="ID('+data._id+')"><img class="item-icon" src="'+data.imgUrl+'"></li>')
                 var attr = ""
                 for (var s = 0; s < data.stats.length; s++) {
                     var obk = Object.keys(data.stats[s])
